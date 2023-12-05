@@ -11,9 +11,9 @@ final dummyNoteList = [
     date: '1975-01-01',
     title: 'Quick & Easy',
   ),
-  Note(
-    id: 3,
-    date: '1975-01-01',
-    title: 'Bonbone d\'oxygène',
-  )
+  // Note(
+  //   id: 3,
+  //   date: '1975-01-01',
+  //   title: 'Bonbone d\'oxygène',
+  // )
 ];

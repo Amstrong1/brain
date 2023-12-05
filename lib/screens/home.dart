@@ -4,31 +4,39 @@ import 'package:flutter/material.dart';
 
 import '../helpers/database.dart';
 import '../helpers/setters.dart';
+import '../widgets/app_bar.dart';
 import '../models/note.dart';
+import '../widgets/image_form.dart';
+import '../widgets/text_form.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final DatabaseHelper databaseHelper;
 
   const HomePage({
     Key? key,
     required this.databaseHelper,
   }) : super(key: key);
+  @override
+  // ignore: library_private_types_in_public_api
+  _HomePageState createState() => _HomePageState();
+}
 
+class _HomePageState extends State<HomePage> {
   void _showAction(BuildContext context, int index) {
     late Widget form;
 
     switch (index) {
       case 0:
-        form = folderForm();
+        form = const TextForm();
         break;
       case 1:
-        form = imageForm();
-        break;
-      case 2:
         form = microphoneForm();
         break;
+      case 2:
+        form = const ImageForm();
+        break;
       case 3:
-        form = textForm();
+        form = folderForm();
         break;
       default:
         break;
@@ -39,98 +47,33 @@ class HomePage extends StatelessWidget {
         return AlertDialog(
           backgroundColor: const Color(0xFF17171F),
           content: form,
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
         );
       },
     );
   }
 
   Widget folderForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'AI Brain Search',
-          style: TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: null,
-                    minLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Searching for',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      filled: true,
-                      fillColor: Color.fromRGBO(30, 30, 38, 1),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.keyboard_voice),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
-        Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(20.0)),
-            gradient: LinearGradient(colors: [
-              Color(0xFF6163B1),
-              Color(0xFF6F3D6D),
-            ]),
-          ),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              padding: const EdgeInsets.all(20),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-            ),
-            onPressed: () {},
-            child: const Text('Search'),
-          ),
-        ),
-      ],
+    return const Text(
+      'Folder Form',
+      style: TextStyle(color: Colors.white),
     );
   }
 
-  Widget imageForm() {
-    return const Text('Folder Form');
-  }
-
   Widget microphoneForm() {
-    return const Text('Folder Form');
-  }
-
-  Widget textForm() {
-    return const Text('Folder Form');
+    return const Text(
+      'Voice Form',
+      style: TextStyle(color: Colors.white),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF17171F),
-      appBar: myAppBar(),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(180),
+        child: MyAppBar(),
+      ),
       body: Column(
         children: [
           Container(
@@ -167,19 +110,19 @@ class HomePage extends StatelessWidget {
         children: [
           ActionButton(
             onPressed: () => _showAction(context, 0),
-            icon: const Icon(Icons.folder),
+            icon: const Icon(Icons.text_fields),
           ),
           ActionButton(
             onPressed: () => _showAction(context, 1),
-            icon: const Icon(Icons.insert_photo),
-          ),
-          ActionButton(
-            onPressed: () => _showAction(context, 2),
             icon: const Icon(Icons.keyboard_voice),
           ),
           ActionButton(
+            onPressed: () => _showAction(context, 2),
+            icon: const Icon(Icons.insert_photo),
+          ),
+          ActionButton(
             onPressed: () => _showAction(context, 3),
-            icon: const Icon(Icons.videocam),
+            icon: const Icon(Icons.folder),
           ),
         ],
       ),
@@ -401,19 +344,23 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Ink(
-      decoration: const ShapeDecoration(
-        shape: CircleBorder(),
-        gradient: LinearGradient(
-          colors: [Color(0xFF6163B1), Color(0xFF6F3D6D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Positioned(
+      right: 16.0,
+      bottom: 16.0,
+      child: Ink(
+        decoration: const ShapeDecoration(
+          shape: CircleBorder(),
+          gradient: LinearGradient(
+            colors: [Color(0xFF6163B1), Color(0xFF6F3D6D)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: icon,
-        color: Colors.white,
+        child: IconButton(
+          onPressed: onPressed,
+          icon: icon,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -439,75 +386,6 @@ class FakeItem extends StatelessWidget {
       ),
     );
   }
-}
-
-AppBar myAppBar() {
-  return AppBar(
-    backgroundColor: const Color(0xFF17171F),
-    elevation: 0,
-    title: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const VerticalDivider(
-          color: Colors.white,
-          width: 2.0,
-          thickness: 2.0,
-        ),
-        Container(
-          padding: const EdgeInsets.all(2.0),
-          decoration: const BoxDecoration(
-            shape: BoxShape.rectangle,
-            color: Color.fromRGBO(30, 30, 38, 1),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.dashboard_outlined,
-              size: 20,
-            ),
-            onPressed: () {
-              // Handle your first icon press
-            },
-          ),
-        ),
-        const VerticalDivider(
-          color: Colors.white, // You can customize the color of the divider
-          width: 2.0,
-          thickness: 2.0,
-        ),
-        Image.asset(
-          'assets/icons/brain.png',
-          height: 50,
-          width: 50,
-        ),
-        const VerticalDivider(
-          color: Colors.white,
-          width: 2.0,
-          thickness: 2.0,
-        ),
-        Container(
-          // padding: const EdgeInsets.all(2.0),
-          decoration: const BoxDecoration(
-            shape: BoxShape.rectangle,
-            color: Color.fromRGBO(30, 30, 38, 1),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.person_outlined,
-              size: 20,
-            ), // Replace with your third icon
-            onPressed: () {
-              // Handle your third icon press
-            },
-          ),
-        ),
-        const VerticalDivider(
-          color: Colors.white,
-          width: 2.0,
-          thickness: 2.0,
-        ),
-      ],
-    ),
-  );
 }
 
 class NoteListView extends StatelessWidget {
@@ -546,14 +424,20 @@ class NoteListView extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     noteList[index].date,
-                    style: const TextStyle(color: Colors.white, fontSize: 10.0),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.0,
+                    ),
                   ),
                 ),
                 subtitle: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     noteList[index].title,
-                    style: const TextStyle(color: Colors.white, fontSize: 16.0),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.0,
+                    ),
                   ),
                 ),
               ),
