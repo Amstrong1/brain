@@ -267,10 +267,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       await widget.databaseHelper.updateFirstLaunch(false);
 
       // ignore: use_build_context_synchronously
-      Navigator.of(context).pushReplacement(
+      Navigator.pushReplacement(
+        context,
         MaterialPageRoute(
-            builder: (context) =>
-                HomePage(databaseHelper: widget.databaseHelper)),
+          builder: (context) => HomePage(databaseHelper: widget.databaseHelper),
+        ),
       );
     }
   }

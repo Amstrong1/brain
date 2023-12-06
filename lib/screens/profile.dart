@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 
 import '../helpers/database.dart';
-import 'home.dart';
-import 'register.dart';
 
-class LoginScreen extends StatefulWidget {
+class ProfileScreen extends StatefulWidget {
   final DatabaseHelper databaseHelper;
 
-  const LoginScreen({
+  const ProfileScreen({
     Key? key,
     required this.databaseHelper,
   }) : super(key: key);
 
   @override
   // ignore: library_private_types_in_public_api
-  _LoginScreenState createState() => _LoginScreenState();
+  _ProfileScreenState createState() => _ProfileScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController passwordController;
 
   @override
   void initState() {
     super.initState();
+    nameController = TextEditingController();
     emailController = TextEditingController();
     passwordController = TextEditingController();
   }
@@ -56,15 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // 2nd Row - Text
               const Text(
-                'Welcome to Note Brain App,',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const Text(
-                'Sign In to your Account',
+                'My Note Brain App Profile',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -74,45 +66,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 10),
 
-              // 3rd Row - Text
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RegistrationScreen(
-                        databaseHelper: widget.databaseHelper,
-                      ),
-                    ),
-                  );
-                },
-                child: RichText(
-                  text: const TextSpan(
-                    text: "You don't have an account ? ",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Click here',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF6F3D6D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 4th Row - Form
               Form(
                 key: _formKey,
                 child: Column(
                   children: [
+                    TextFormField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Name',
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: const Color.fromRGBO(30, 30, 38, 1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        contentPadding: const EdgeInsets.all(20.0),
+                      ),
+                      controller: nameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
                     TextFormField(
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
@@ -180,10 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   borderRadius: BorderRadius.circular(20.0),
                                 ),
                               ),
-                              onPressed: () {
-                                _submitForm(context);
-                              },
-                              child: const Text('SIGN IN'),
+                              onPressed: () {},
+                              child: const Text('UPDATE'),
                             ),
                           ),
                         ),
@@ -192,94 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // 5th Row - Divider with Text
-              const DividerWithText(),
-
-              const SizedBox(height: 20),
-
-              // 6th Row - Google Login Button
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF17171F),
-                        padding: const EdgeInsets.all(20),
-                        shape: RoundedRectangleBorder(
-                          side: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
-                      icon: Image.asset(
-                        'assets/icons/google.png',
-                        width: 20,
-                      ),
-                      label: Text(
-                        'Continue with Google'.toUpperCase(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  void _submitForm(BuildContext context) async {
-    if (_formKey.currentState!.validate()) {
-      // await widget.databaseHelper.saveUser(
-      //   emailController.text,
-      //   passwordController.text,
-      // );
-
-      // Update isFirstLaunch to false after the first registration
-      await widget.databaseHelper.updateFirstLaunch(false);
-
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(databaseHelper: widget.databaseHelper),
-        ),
-      );
-    }
-  }
-}
-
-class DividerWithText extends StatelessWidget {
-  const DividerWithText({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Expanded(
-          child: Divider(
-            color: Colors.grey,
-            thickness: 2.0,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Or Sign In With ',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-        Expanded(
-          child: Divider(
-            color: Colors.grey,
-            thickness: 2.0,
-          ),
-        ),
-      ],
     );
   }
 }
