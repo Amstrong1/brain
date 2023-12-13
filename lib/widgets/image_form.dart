@@ -42,8 +42,14 @@ class _ImageFormState extends State<ImageForm> {
                 image = img;
               });
             },
-            label: const Text('Choose Image'),
-            icon: const Icon(Icons.image),
+            label: const Text(
+              'Choose Image',
+              style: TextStyle(color: Colors.white),
+            ),
+            icon: const Icon(
+              Icons.image,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -72,8 +78,14 @@ class _ImageFormState extends State<ImageForm> {
                 image = img;
               });
             },
-            label: const Text('Take Photo'),
-            icon: const Icon(Icons.camera_alt_outlined),
+            label: const Text(
+              'Take Photo',
+              style: TextStyle(color: Colors.white),
+            ),
+            icon: const Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white,
+            ),
           ),
         ),
       ],

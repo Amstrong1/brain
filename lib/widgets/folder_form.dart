@@ -42,7 +42,10 @@ class FolderForm extends StatelessWidget {
                 ),
               ),
               onPressed: () {},
-              child: const Text('Save'),
+              child: const Text(
+                'Save',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ],

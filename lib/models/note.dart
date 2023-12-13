@@ -1,10 +1,10 @@
 class Note {
-  int? id; // Make id nullable to handle potential null values
+  int id;
   String date;
   String title;
 
   Note({
-    this.id,
+    required this.id,
     required this.date,
     required this.title,
   });

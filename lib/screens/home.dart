@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/folder_form.dart';
+import '../widgets/microphone_form.dart';
 import '../widgets/visibility_form.dart';
 import '../widgets/expandable_fab.dart';
 import '../widgets/image_form.dart';
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
         form = const TextForm();
         break;
       case 1:
-        form = microphoneForm();
+        form = const AudioRecorder();
         break;
       case 2:
         form = const ImageForm();

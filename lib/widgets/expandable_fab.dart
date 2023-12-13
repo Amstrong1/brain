@@ -1,9 +1,5 @@
 import 'dart:math' as math;
-// import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
-// import '../helpers/global.dart';
-// import 'note_list.dart';
 
 @immutable
 class ExpandableFab extends StatefulWidget {
