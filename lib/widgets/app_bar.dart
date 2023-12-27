@@ -1,3 +1,4 @@
+import 'package:brain/screens/result.dart';
 import 'package:flutter/material.dart';
 
 import '../helpers/database.dart';
@@ -115,8 +116,20 @@ class MyAppBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20.0),
                           ),
                         ),
-                        onPressed: () {},
-                        child: const Text('Search'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChatScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Search',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ],

@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../helpers/database.dart';
 import 'home.dart';
@@ -27,6 +30,22 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     emailController = TextEditingController();
     passwordController = TextEditingController();
+  }
+
+  Future<String> _getToken() async {
+    var url = Uri.parse('http://35.180.72.15/api/auth/login');
+    var result = await http.post(
+      url,
+      body: {
+        'username': emailController.text,
+        'password': passwordController.text,
+      },
+    );
+    print(result.body);
+    // final token = Uri.parse(result).queryParameters['access_token'];
+    final token = jsonDecode(result.body)['access_token'];
+
+    return token;
   }
 
   @override
@@ -183,7 +202,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () {
                                 _submitForm(context);
                               },
-                              child: const Text('SIGN IN'),
+                              child: const Text(
+                                'SIGN IN',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
                         ),
@@ -234,24 +256,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // await widget.databaseHelper.saveUser(
-      //   emailController.text,
-      //   passwordController.text,
-      // );
-
       // Update isFirstLaunch to false after the first registration
-      await widget.databaseHelper.updateFirstLaunch(false);
+      // await widget.databaseHelper.updateFirstLaunch(false);
 
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(databaseHelper: widget.databaseHelper),
-        ),
-      );
+      try {
+        final token = await _getToken();
+        // Redirect to the home screen with the token
+        // ignore: use_build_context_synchronously
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomePage(databaseHelper: widget.databaseHelper, token: token),
+          ),
+        );
+      } catch (e) {
+        // Show an error message or prompt the user to log in again
+      }
     }
   }
 }
+// }
 
 class DividerWithText extends StatelessWidget {
   const DividerWithText({super.key});

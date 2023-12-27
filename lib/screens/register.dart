@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../helpers/database.dart';
 import 'home.dart';
@@ -42,7 +46,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1st Row - Image
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.0),
@@ -174,6 +177,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         contentPadding: const EdgeInsets.all(20.0),
                       ),
                       obscureText: true,
+                      controller: passwordController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
@@ -206,7 +210,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               onPressed: () {
                                 _submitForm(context);
                               },
-                              child: const Text('SIGN UP'),
+                              child: const Text(
+                                'SIGN UP',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
                         ),
@@ -218,12 +225,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
               const SizedBox(height: 20),
 
-              // 5th Row - Divider with Text
               const DividerWithText(),
 
               const SizedBox(height: 20),
 
-              // 6th Row - Google Login Button
               Row(
                 children: [
                   Expanded(
@@ -257,22 +262,68 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      await widget.databaseHelper.saveUser(
-        nameController.text,
-        emailController.text,
-        passwordController.text,
-      );
+      var url = Uri.parse('http://35.180.72.15/api/auth/createUser');
 
-      // Update isFirstLaunch to false after the first registration
-      await widget.databaseHelper.updateFirstLaunch(false);
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+      };
 
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(databaseHelper: widget.databaseHelper),
-        ),
-      );
+      Map<String, String> body = {
+        'email': emailController.text,
+        'username': nameController.text,
+        'password': passwordController.text,
+      };
+
+      try {
+        var response = await http.post(
+          url,
+          headers: headers,
+          body: json.encode(body),
+        );
+
+        // if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, you can proceed with saving the user's credentials locally
+        // var urlToken = Uri.parse('http://35.180.72.15/api/auth/login');
+        // var responseLog = await http.post(
+        //   urlToken,
+        //   body: {
+        //     'username': emailController.text,
+        //     'password': passwordController.text,
+        //   },
+        // );
+
+        // print('Response body: ${responseLog.body}');
+
+        // if (response.statusCode == 200) {
+        await widget.databaseHelper.saveUser(
+          nameController.text,
+          emailController.text,
+          passwordController.text,
+        );
+
+        // Update isFirstLaunch to false after the first registration
+        // await widget.databaseHelper.updateFirstLaunch(false);
+
+        // ignore: use_build_context_synchronously
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                LoginScreen(databaseHelper: widget.databaseHelper),
+          ),
+        );
+        // } else {
+        //   print('Failed to get token: ${responseLog.reasonPhrase}');
+        // }
+        // } else {
+        //   print('Failed to save user: ${response.body}');
+        //   print('Response reason: ${response.reasonPhrase}');
+        // }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error encoding request body: $e');
+        }
+      }
     }
   }
 }

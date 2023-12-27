@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'helpers/database.dart';
 import 'screens/login.dart';
-import 'screens/home.dart';
+// import 'screens/home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,18 +11,20 @@ void main() async {
   final databaseHelper = DatabaseHelper();
   await databaseHelper.initializeDatabase();
 
-  bool isFirstLaunch = await databaseHelper.checkFirstLaunch();
+  // bool isFirstLaunch = await databaseHelper.checkFirstLaunch();
 
-  runApp(MyApp(isFirstLaunch: isFirstLaunch, databaseHelper: databaseHelper));
+  runApp(MyApp(
+      // isFirstLaunch: isFirstLaunch,
+      databaseHelper: databaseHelper));
 }
 
 class MyApp extends StatelessWidget {
-  final bool isFirstLaunch;
+  // final bool isFirstLaunch;
   final DatabaseHelper databaseHelper;
 
   const MyApp({
     Key? key,
-    required this.isFirstLaunch,
+    // required this.isFirstLaunch,
     required this.databaseHelper,
   }) : super(key: key);
 
@@ -32,10 +34,11 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       theme: ThemeData(fontFamily: 'Poppins'),
-      // debugShowCheckedModeBanner: false,
-      home: isFirstLaunch
-          ? LoginScreen(databaseHelper: databaseHelper)
-          : HomePage(databaseHelper: databaseHelper),
+      debugShowCheckedModeBanner: false,
+      // home: isFirstLaunch
+      //     ? LoginScreen(databaseHelper: databaseHelper)
+      //     : HomePage(databaseHelper: databaseHelper),
+      home: LoginScreen(databaseHelper: databaseHelper),
     );
   }
 }

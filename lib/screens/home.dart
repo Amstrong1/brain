@@ -15,7 +15,7 @@ class HomePage extends StatefulWidget {
 
   const HomePage({
     Key? key,
-    required this.databaseHelper,
+    required this.databaseHelper, required String token,
   }) : super(key: key);
   @override
   // ignore: library_private_types_in_public_api
@@ -51,13 +51,6 @@ class _HomePageState extends State<HomePage> {
           content: form,
         );
       },
-    );
-  }
-
-  Widget microphoneForm() {
-    return const Text(
-      'Voice Form',
-      style: TextStyle(color: Colors.white),
     );
   }
 
