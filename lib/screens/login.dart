@@ -1,11 +1,13 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/database.dart';
-import 'home.dart';
 import 'register.dart';
+import 'home.dart';
 
 class LoginScreen extends StatefulWidget {
   final DatabaseHelper databaseHelper;
@@ -14,7 +16,6 @@ class LoginScreen extends StatefulWidget {
     Key? key,
     required this.databaseHelper,
   }) : super(key: key);
-
   @override
   // ignore: library_private_types_in_public_api
   _LoginScreenState createState() => _LoginScreenState();
@@ -34,18 +35,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<String> _getToken() async {
     var url = Uri.parse('http://35.180.72.15/api/auth/login');
-    var result = await http.post(
-      url,
-      body: {
-        'username': emailController.text,
-        'password': passwordController.text,
-      },
-    );
-    print(result.body);
-    // final token = Uri.parse(result).queryParameters['access_token'];
-    final token = jsonDecode(result.body)['access_token'];
+    try {
+      var result = await http.post(
+        url,
+        body: {
+          'username': emailController.text,
+          'password': passwordController.text,
+        },
+      );
+      final token = jsonDecode(result.body)['access_token'];
+      final refreshToken = jsonDecode(result.body)['refresh_token'];
+      await _saveTokenToSharedPreferences(token);
+      await _saveRefreshTokenToSharedPreferences(refreshToken);
+      return token;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 
-    return token;
+  Future<void> _saveTokenToSharedPreferences(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
+  }
+
+  Future<void> _saveRefreshTokenToSharedPreferences(String refreshToken) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('refreshToken', refreshToken);
   }
 
   @override
@@ -59,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1st Row - Image
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.0),
@@ -70,10 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 100,
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // 2nd Row - Text
               const Text(
                 'Welcome to Note Brain App,',
                 style: TextStyle(
@@ -90,10 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Colors.white,
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // 3rd Row - Text
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -124,10 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // 4th Row - Form
               Form(
                 key: _formKey,
                 child: Column(
@@ -169,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         contentPadding: const EdgeInsets.all(20.0),
                       ),
+                      controller: passwordController,
                       obscureText: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -214,15 +220,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // 5th Row - Divider with Text
               const DividerWithText(),
-
               const SizedBox(height: 20),
-
-              // 6th Row - Google Login Button
+              // google login form 
               Row(
                 children: [
                   Expanded(
@@ -271,12 +272,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } catch (e) {
-        // Show an error message or prompt the user to log in again
+        SnackBar(content: Text(e.toString()));
       }
     }
   }
 }
-// }
 
 class DividerWithText extends StatelessWidget {
   const DividerWithText({super.key});

@@ -8,6 +8,7 @@ class TextForm extends StatelessWidget {
     return SizedBox(
       height: 200,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           TextFormField(
             style: const TextStyle(color: Colors.white),

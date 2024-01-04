@@ -15,7 +15,8 @@ class HomePage extends StatefulWidget {
 
   const HomePage({
     Key? key,
-    required this.databaseHelper, required String token,
+    required this.databaseHelper,
+    required String token,
   }) : super(key: key);
   @override
   // ignore: library_private_types_in_public_api
@@ -24,6 +25,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool isNoteClicked = false;
+  bool showForm = false;
 
   void _showAction(BuildContext context, int index) {
     late Widget form;
@@ -54,69 +56,112 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _toggleFab() {
+    setState(() {
+      showForm = !showForm;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF17171F),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MyAppBar(databaseHelper: widget.databaseHelper),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            color: const Color(0xFF17171F),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'My Notes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+        backgroundColor: const Color(0xFF17171F),
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MyAppBar(databaseHelper: widget.databaseHelper),
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              color: const Color(0xFF17171F),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'My Notes',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                Text(
-                  'Recent',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+                  Text(
+                    'Recent',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            VisiblityForm(isTextFieldVisible: showForm),
+            const SizedBox(height: 4),
+            Flexible(
+              child: NoteListView(
+                onItemClicked: (bool listClicked) {
+                  isNoteClicked = listClicked;
+                },
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton:
+            // isNoteClicked == false
+            //     ?
+            FloatingActionButton(
+          onPressed: () {
+            _toggleFab();
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Ink(
+            decoration: const ShapeDecoration(
+              shape: CircleBorder(),
+              gradient: LinearGradient(
+                colors: [Color(0xFF6163B1), Color(0xFF6F3D6D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
             ),
           ),
-          const SizedBox(height: 10),
-          const VisiblityForm(isTextFieldVisible: false),
-          Flexible(
-            child: NoteListView(
-              onItemClicked: (bool listClicked) {
-                isNoteClicked = listClicked;
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: ExpandableFab(
-        distance: 112,
-        children: [
-          ActionButton(
-            onPressed: () => _showAction(context, 0),
-            icon: const Icon(Icons.text_fields),
-          ),
-          ActionButton(
-            onPressed: () => _showAction(context, 1),
-            icon: const Icon(Icons.keyboard_voice),
-          ),
-          ActionButton(
-            onPressed: () => _showAction(context, 2),
-            icon: const Icon(Icons.insert_photo),
-          ),
-          ActionButton(
-            onPressed: () => _showAction(context, 3),
-            icon: const Icon(Icons.folder),
-          ),
-        ],
-      ),
-    );
+        )
+        // : ExpandableFab(
+        //     distance: 112,
+        //     children: [
+        //       ActionButton(
+        //         onPressed: () {
+        //           _showAction(context, 0);
+        //         },
+        //         icon: const Icon(Icons.text_fields),
+        //       ),
+        //       ActionButton(
+        //         onPressed: () {
+        //           _showAction(context, 1);
+        //         },
+        //         icon: const Icon(Icons.keyboard_voice),
+        //       ),
+        //       ActionButton(
+        //         onPressed: () {
+        //           _showAction(context, 2);
+        //         },
+        //         icon: const Icon(Icons.insert_photo),
+        //       ),
+        //       ActionButton(
+        //         onPressed: () {
+        //           _showAction(context, 3);
+        //         },
+        //         icon: const Icon(Icons.folder),
+        //       ),
+        //     ],
+        //   ),
+
+        );
   }
 }

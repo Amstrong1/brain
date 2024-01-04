@@ -16,4 +16,12 @@ class Note {
       'email': title,
     };
   }
+
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['id'],
+      date: json['date'],
+      title: json['title'],
+    );
+  }
 }

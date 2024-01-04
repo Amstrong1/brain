@@ -50,19 +50,12 @@ class _ExpandableFabState extends State<ExpandableFab>
 
   void _toggle() {
     setState(() {
-      // if (NoteListView.listClicked) {
-      // MyGlobal.isTextFieldVisible = true;
-      // if (kDebugMode) {
-      //   print(MyGlobal.isTextFieldVisible);
-      // }
-      // } else {
       _open = !_open;
       if (_open) {
         _controller.forward();
       } else {
         _controller.reverse();
       }
-      // }
     });
   }
 

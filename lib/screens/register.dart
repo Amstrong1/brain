@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../helpers/database.dart';
-import 'home.dart';
 import 'login.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -275,7 +274,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       };
 
       try {
-        var response = await http.post(
+        await http.post(
           url,
           headers: headers,
           body: json.encode(body),

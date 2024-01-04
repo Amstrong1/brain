@@ -43,6 +43,8 @@ dependencies:
   flutter_countdown_timer: ^4.1.0
   http: ^1.1.2
   flutter_web_auth: ^0.5.0
+  shared_preferences: ^2.2.2
+  outline_gradient_button: ^2.0.1+1
 
 dev_dependencies:
   flutter_test:
