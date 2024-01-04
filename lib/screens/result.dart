@@ -42,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<String?> _getRefreshTokenFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('refreshToken');
-  }  
+  }
 
   Future<void> _saveTokenToSharedPreferences(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -69,13 +69,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<String?> _getDateTimeFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('timestamp');
+  }
+
   void sendApiRequest() async {
     const apiUrl = 'http://35.180.72.15/api/items/ask';
     String question = _textController.text;
 
     String? authToken = await _getTokenFromSharedPreferences();
+    String? tokenTime = await _getDateTimeFromSharedPreferences();
 
-    authToken ??= await refreshToken();
+    DateTime date1 = DateTime.parse(tokenTime!);
+    DateTime date2 = DateTime.now();
+
+    Duration difference = date2.difference(date1);
+
+    if (difference.inMinutes > 30) {
+      authToken = await refreshToken();
+    }
 
     final Map<String, dynamic> requestData = {
       'itemID': '1',

@@ -34,6 +34,11 @@ class _NoteListViewState extends State<NoteListView> {
     return prefs.getString('token');
   }
 
+  Future<String?> _getDateTimeFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('timestamp');
+  }
+
   Future<String?> _getRefreshTokenFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('refreshToken');
@@ -65,7 +70,17 @@ class _NoteListViewState extends State<NoteListView> {
 
   Future<List<Map<String, dynamic>>> getAllItems() async {
     String? authToken = await _getTokenFromSharedPreferences();
-    authToken ??= await refreshToken();
+    String? tokenTime = await _getDateTimeFromSharedPreferences();
+
+    DateTime date1 = DateTime.parse(tokenTime!);
+    DateTime date2 = DateTime.now();
+
+    Duration difference = date2.difference(date1);
+
+    if (difference.inMinutes > 30) {
+      authToken = await refreshToken();
+    }
+
     try {
       final response = await http.get(
         Uri.parse(getItems),
@@ -73,8 +88,6 @@ class _NoteListViewState extends State<NoteListView> {
           'Authorization': 'Bearer $authToken',
         },
       );
-
-      print(authToken);
 
       if (response.statusCode == 200) {
         Map<String, dynamic> responseData = json.decode(response.body);
@@ -108,7 +121,16 @@ class _NoteListViewState extends State<NoteListView> {
 
   Future<void> deleteItem() async {
     String? authToken = await _getTokenFromSharedPreferences();
-    authToken ??= await refreshToken();
+    String? tokenTime = await _getDateTimeFromSharedPreferences();
+
+    DateTime date1 = DateTime.parse(tokenTime!);
+    DateTime date2 = DateTime.now();
+
+    Duration difference = date2.difference(date1);
+
+    if (difference.inMinutes > 30) {
+      authToken = await refreshToken();
+    }
 
     try {
       final response = await http.delete(

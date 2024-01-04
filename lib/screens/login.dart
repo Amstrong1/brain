@@ -45,7 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       final token = jsonDecode(result.body)['access_token'];
       final refreshToken = jsonDecode(result.body)['refresh_token'];
-      await _saveTokenToSharedPreferences(token);
+      final DateTime currentTime = DateTime.now();
+      final String formattedTime = currentTime.toIso8601String();
+      await _saveTokenToSharedPreferences(token, formattedTime);
       await _saveRefreshTokenToSharedPreferences(refreshToken);
       return token;
     } catch (e) {
@@ -53,9 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _saveTokenToSharedPreferences(String token) async {
+  Future<void> _saveTokenToSharedPreferences(
+      String token, String timestamp) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('token', token);
+    prefs.setString('timestamp', timestamp);
   }
 
   Future<void> _saveRefreshTokenToSharedPreferences(String refreshToken) async {
@@ -223,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               const DividerWithText(),
               const SizedBox(height: 20),
-              // google login form 
+              // google login form
               Row(
                 children: [
                   Expanded(
