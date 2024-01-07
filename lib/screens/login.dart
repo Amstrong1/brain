@@ -5,16 +5,12 @@ import 'package:flutter/material.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../helpers/database.dart';
 import 'register.dart';
 import 'home.dart';
 
 class LoginScreen extends StatefulWidget {
-  final DatabaseHelper databaseHelper;
-
   const LoginScreen({
     Key? key,
-    required this.databaseHelper,
   }) : super(key: key);
   @override
   // ignore: library_private_types_in_public_api
@@ -43,16 +39,27 @@ class _LoginScreenState extends State<LoginScreen> {
           'password': passwordController.text,
         },
       );
+
       final token = jsonDecode(result.body)['access_token'];
       final refreshToken = jsonDecode(result.body)['refresh_token'];
       final DateTime currentTime = DateTime.now();
       final String formattedTime = currentTime.toIso8601String();
+      await _saveUserCredentialsToSharedPreferences(
+          emailController.text, passwordController.text);
       await _saveTokenToSharedPreferences(token, formattedTime);
       await _saveRefreshTokenToSharedPreferences(refreshToken);
       return token;
     } catch (e) {
+      SnackBar(content: Text(e.toString()));
       throw Exception(e.toString());
     }
+  }
+
+  Future<void> _saveUserCredentialsToSharedPreferences(
+      String email, String password) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('email', email);
+    prefs.setString('password', password);
   }
 
   Future<void> _saveTokenToSharedPreferences(
@@ -111,9 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RegistrationScreen(
-                        databaseHelper: widget.databaseHelper,
-                      ),
+                      builder: (context) => const RegistrationScreen(),
                     ),
                   );
                 },
@@ -247,6 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       label: Text(
                         'Continue with Google'.toUpperCase(),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -261,22 +267,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submitForm(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Update isFirstLaunch to false after the first registration
-      // await widget.databaseHelper.updateFirstLaunch(false);
-
       try {
         final token = await _getToken();
         // Redirect to the home screen with the token
+        if (token != "") {
+          // ignore: use_build_context_synchronously
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(token: token),
+            ),
+          );
+        } else {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Incorrect username or password'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
         // ignore: use_build_context_synchronously
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                HomePage(databaseHelper: widget.databaseHelper, token: token),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect username or password'),
+            duration: Duration(seconds: 2),
           ),
         );
-      } catch (e) {
-        SnackBar(content: Text(e.toString()));
       }
     }
   }

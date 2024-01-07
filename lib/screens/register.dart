@@ -4,15 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import '../helpers/database.dart';
 import 'login.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  final DatabaseHelper databaseHelper;
-
   const RegistrationScreen({
     Key? key,
-    required this.databaseHelper,
   }) : super(key: key);
 
   @override
@@ -84,9 +80,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => LoginScreen(
-                        databaseHelper: widget.databaseHelper,
-                      ),
+                      builder: (context) => const LoginScreen(),
                     ),
                   );
                 },
@@ -294,11 +288,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         // print('Response body: ${responseLog.body}');
 
         // if (response.statusCode == 200) {
-        await widget.databaseHelper.saveUser(
-          nameController.text,
-          emailController.text,
-          passwordController.text,
-        );
+        // await widget.databaseHelper.saveUser(
+        //   nameController.text,
+        //   emailController.text,
+        //   passwordController.text,
+        // );
 
         // Update isFirstLaunch to false after the first registration
         // await widget.databaseHelper.updateFirstLaunch(false);
@@ -307,8 +301,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                LoginScreen(databaseHelper: widget.databaseHelper),
+            builder: (context) => const LoginScreen(),
           ),
         );
         // } else {

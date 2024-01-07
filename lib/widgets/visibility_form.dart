@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'package:brain/helpers/database.dart';
-import 'package:brain/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:brain/screens/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
@@ -30,10 +29,57 @@ class _LoginScreenState extends State<VisiblityForm> {
     return prefs.getString('token');
   }
 
+  Future<String?> _getDateTimeFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('timestamp');
+  }
+
+  Future<String?> _getRefreshTokenFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('refreshToken');
+  }
+
+  Future<void> _saveTokenToSharedPreferences(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
+  }
+
+  Future<String> refreshToken() async {
+    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
+
+    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $refreshToken',
+        },
+      );
+      final token = jsonDecode(response.body)['access_token'];
+      _saveTokenToSharedPreferences(token);
+      return token;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
   void newItem() async {
     if (_formKey.currentState!.validate()) {
-      String? token = await _getTokenFromSharedPreferences();
       String apiUrl = 'http://35.180.72.15/api/items/newItem';
+      String? token = await _getTokenFromSharedPreferences();
+
+      String? tokenTime = await _getDateTimeFromSharedPreferences();
+
+      DateTime date1 = DateTime.parse(tokenTime!);
+      DateTime date2 = DateTime.now();
+
+      Duration difference = date2.difference(date1);
+
+      if (difference.inMinutes > 30 || difference.inMinutes == 0) {
+        token = await refreshToken();
+      }
 
       final Map<String, dynamic> requestData = {
         'name': itemController.text,
@@ -52,34 +98,39 @@ class _LoginScreenState extends State<VisiblityForm> {
           );
 
           if (response.statusCode == 200) {
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Item ajouté avec succès')),
+            );
             _reloadApp();
-            print('API Response: ${response.body}');
           } else {
-            print('Error: ${response.statusCode}');
-            print('Response Body: ${response.body}');
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Erreur lors de l\'ajout')),
+            );
           }
         } catch (error) {
-          print('Error: $error');
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error.toString())),
+          );
         }
       } else {
         // Handle the case where the token is not available
-        print('Token not found in SharedPreferences');
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Token not found in SharedPreferences')),
+        );
       }
     }
   }
 
   void _reloadApp() async {
-    final databaseHelper = DatabaseHelper();
-    await databaseHelper.initializeDatabase();
     String? token = await _getTokenFromSharedPreferences();
 
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-            builder: (context) => HomePage(
-                  databaseHelper: databaseHelper,
-                  token: token!,
-                )),
+        MaterialPageRoute(builder: (context) => HomePage(token: token!)),
         (Route<dynamic> route) => false,
       );
     });

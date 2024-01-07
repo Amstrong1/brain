@@ -1,3 +1,4 @@
+import 'package:brain/screens/home.dart';
 import 'package:flutter/material.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,11 +6,15 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 typedef ItemClickCallback = void Function(bool);
+typedef ItemIdCallback = void Function(int);
 
 class NoteListView extends StatefulWidget {
   final ItemClickCallback onItemClicked;
+  final ItemIdCallback onItemId;
 
-  const NoteListView({Key? key, required this.onItemClicked}) : super(key: key);
+  const NoteListView(
+      {Key? key, required this.onItemClicked, required this.onItemId})
+      : super(key: key);
 
   @override
   // ignore: library_private_types_in_public_api
@@ -29,6 +34,17 @@ class _NoteListViewState extends State<NoteListView> {
     }
   }
 
+  void _reloadApp() async {
+    String? token = await _getTokenFromSharedPreferences();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => HomePage(token: token!)),
+        (Route<dynamic> route) => false,
+      );
+    });
+  }
+
   Future<String?> _getTokenFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -44,8 +60,13 @@ class _NoteListViewState extends State<NoteListView> {
     return prefs.getString('refreshToken');
   }
 
+  Future<void> _saveTokenToSharedPreferences(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
+  }
+
   Future<String> refreshToken() async {
-    const String apiUrl = 'http://127.0.0.1:8000/0.1.0/api/auth/refreshToken';
+    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
 
     String? refreshToken = await _getRefreshTokenFromSharedPreferences();
 
@@ -58,17 +79,16 @@ class _NoteListViewState extends State<NoteListView> {
         },
       );
       final token = jsonDecode(response.body)['access_token'];
+      _saveTokenToSharedPreferences(token);
       return token;
     } catch (e) {
       throw Exception(e.toString());
     }
   }
 
-  String getItems = 'http://35.180.72.15/api/items/getAllItems';
-
-  String delItem = 'http://35.180.72.15/api/items/deleteItem';
-
   Future<List<Map<String, dynamic>>> getAllItems() async {
+    String getItems = 'http://35.180.72.15/api/items/getAllItems';
+
     String? authToken = await _getTokenFromSharedPreferences();
     String? tokenTime = await _getDateTimeFromSharedPreferences();
 
@@ -77,7 +97,7 @@ class _NoteListViewState extends State<NoteListView> {
 
     Duration difference = date2.difference(date1);
 
-    if (difference.inMinutes > 30) {
+    if (difference.inMinutes > 30 || difference.inMinutes == 0) {
       authToken = await refreshToken();
     }
 
@@ -100,6 +120,7 @@ class _NoteListViewState extends State<NoteListView> {
               noteList.add({
                 'id': childrenData[i]['id'],
                 'name': childrenData[i]['name'],
+                'notes': childrenData[i]['notes'],
               });
             }
           }
@@ -107,11 +128,12 @@ class _NoteListViewState extends State<NoteListView> {
 
         setState(() {
           // Update the state with the new data
-          noteList = noteList;
+          noteList = noteList.reversed.toList();
           _dataLoaded = true;
         });
         return noteList;
       } else {
+        const SnackBar(content: Text('No data fetched'));
         throw Exception('No data fetched');
       }
     } catch (e) {
@@ -119,7 +141,9 @@ class _NoteListViewState extends State<NoteListView> {
     }
   }
 
-  Future<void> deleteItem() async {
+  Future<void> deleteItem(String itemId) async {
+    String delItem = 'http://35.180.72.15/api/items/deleteItem';
+
     String? authToken = await _getTokenFromSharedPreferences();
     String? tokenTime = await _getDateTimeFromSharedPreferences();
 
@@ -128,32 +152,56 @@ class _NoteListViewState extends State<NoteListView> {
 
     Duration difference = date2.difference(date1);
 
-    if (difference.inMinutes > 30) {
+    if (difference.inMinutes > 30 || difference.inMinutes == 0) {
       authToken = await refreshToken();
     }
+
+    final Map<String, String> body = {
+      'id': itemId,
+    };
 
     try {
       final response = await http.delete(
         Uri.parse(delItem),
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $authToken',
         },
+        body: jsonEncode(body),
       );
 
       if (response.statusCode == 200) {
-        // La suppression a réussi.
-        print('Item supprimé avec succès');
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item Supprimé'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        _reloadApp();
       } else {
-        // La suppression a échoué.
-        print('Échec de la suppression : ${response.statusCode}');
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Echec de la suppression'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
       // Une erreur s'est produite lors de la requête.
-      print('Erreur lors de la requête DELETE : $e');
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la requête DELETE : $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
   bool listClicked = false;
+  late int itemId;
   int _clickedNoteId = -1;
 
   Map<int, bool> iconVisibilityMap = {};
@@ -201,11 +249,6 @@ class _NoteListViewState extends State<NoteListView> {
               padding: const EdgeInsets.all(6.0),
               child: Stack(
                 children: [
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     _handleItemClick(context, note['id']);
-                  //   },
-                  // ),
                   ExpansionTile(
                     trailing: const SizedBox(width: 0, height: 0),
                     title: Padding(
@@ -218,50 +261,24 @@ class _NoteListViewState extends State<NoteListView> {
                         ),
                       ),
                     ),
-                    children: const <Widget>[
-                      ListTile(
-                        leading: Icon(Icons.text_fields),
-                        title: Text(
-                          'Contenu texte',
-                          style: TextStyle(
-                            color: Colors.white,
+                    children: <Widget>[
+                      for (var subnote in note['notes'])
+                        ListTile(
+                          title: Text(
+                            subnote['name'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: Text(
+                            subnote['content'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
-
-                  // ListTile(
-                  //   contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
-                  //   title: Padding(
-                  //     padding: const EdgeInsets.all(8),
-                  //     child: Text(
-                  //       note['name'],
-                  //       style: const TextStyle(
-                  //         color: Colors.white,
-                  //         fontSize: 18.0,
-                  //       ),
-                  //     ),
-                  //   ),
-                  //   subtitle: Padding(
-                  //     padding: const EdgeInsets.all(8),
-                  //     child: Row(
-                  //       mainAxisAlignment: MainAxisAlignment.end,
-                  //       children: [
-                  //         Text(
-                  //           note['name'],
-                  //           style: const TextStyle(
-                  //             color: Colors.white,
-                  //             fontSize: 10.0,
-                  //           ),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  //   onTap: () {
-                  //     _handleItemClick(context, note['id']);
-                  //   },
-                  // ),
                   Positioned(
                     top: 0,
                     right: 3,
@@ -282,6 +299,16 @@ class _NoteListViewState extends State<NoteListView> {
                       child: Row(
                         children: [
                           IconButton(
+                            onPressed: () {
+                              _handleItemClick(context, note['id']);
+                            },
+                            icon: const Icon(
+                              Icons.check_box_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          IconButton(
                             onPressed: () {},
                             icon: const Icon(
                               Icons.edit_note_outlined,
@@ -291,7 +318,7 @@ class _NoteListViewState extends State<NoteListView> {
                           ),
                           IconButton(
                             onPressed: () {
-                              deleteItem();
+                              deleteItem(note['id'].toString());
                             },
                             icon: const Icon(
                               Icons.delete_outline,
@@ -307,18 +334,25 @@ class _NoteListViewState extends State<NoteListView> {
             ),
           ),
         ),
+        const SizedBox(height: 15),
       ],
     );
   }
 
   void _handleItemClick(BuildContext context, int? id) {
     setState(() {
+      itemId = id!;
       listClicked = !listClicked;
-      _clickedNoteId = id!;
+      if (_clickedNoteId != id) {
+        _clickedNoteId = id;
+      } else {
+        _clickedNoteId = -1;
+      }
     });
 
     // Notify the parent widget about the item click
     widget.onItemClicked(listClicked);
+    widget.onItemId(itemId);
   }
 
   void _toggleIconVisibility(int noteId) {

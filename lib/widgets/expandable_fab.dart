@@ -84,7 +84,7 @@ class _ExpandableFabState extends State<ExpandableFab>
           clipBehavior: Clip.antiAlias,
           elevation: 4,
           child: Container(
-            color: Colors.grey, // Set the background color to gray
+            color: Colors.grey,
             child: InkWell(
               onTap: _toggle,
               child: const Padding(
@@ -213,23 +213,30 @@ class ActionButton extends StatelessWidget {
   });
 
   final VoidCallback? onPressed;
-  final Widget icon;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    return Ink(
-      decoration: const ShapeDecoration(
-        shape: CircleBorder(),
-        gradient: LinearGradient(
-          colors: [Color(0xFF6163B1), Color(0xFF6F3D6D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return FloatingActionButton(
+      onPressed: onPressed,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Ink(
+        decoration: const ShapeDecoration(
+          shape: CircleBorder(),
+          gradient: LinearGradient(
+            colors: [Color(0xFF6163B1), Color(0xFF6F3D6D)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: icon,
-        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Icon(
+            icon,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

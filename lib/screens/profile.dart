@@ -1,14 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:brain/models/user.dart';
+import 'dart:convert';
 
-import '../helpers/database.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final DatabaseHelper databaseHelper;
-
   const ProfileScreen({
     Key? key,
-    required this.databaseHelper,
   }) : super(key: key);
 
   @override
@@ -18,16 +16,97 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  var userInfo = UserInfo(
+    email: '',
+    username: '',
+    id: '',
+    plan: '',
+  );
   // late TextEditingController nameController;
   // late TextEditingController emailController;
   // late TextEditingController passwordController;
 
+  Future<String?> _getTokenFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<String?> _getRefreshTokenFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('refreshToken');
+  }
+
+  Future<void> _saveTokenToSharedPreferences(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
+  }
+
+  Future<String> refreshToken() async {
+    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
+
+    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $refreshToken',
+        },
+      );
+      final token = jsonDecode(response.body)['access_token'];
+      _saveTokenToSharedPreferences(token);
+      return token;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<String?> _getDateTimeFromSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('timestamp');
+  }
+
+  void fetchUserInfo() async {
+    const String url = 'http://35.180.72.15/api/user/getInfo';
+
+    String? authToken = await _getTokenFromSharedPreferences();
+    String? tokenTime = await _getDateTimeFromSharedPreferences();
+
+    DateTime date1 = DateTime.parse(tokenTime!);
+    DateTime date2 = DateTime.now();
+
+    Duration difference = date2.difference(date1);
+
+    if (difference.inMinutes > 30 || difference.inMinutes == 0) {
+      authToken = await refreshToken();
+    }
+
+    final Map<String, String> headers = {'Authorization': 'Bearer $authToken'};
+
+    try {
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      if (response.statusCode == 200) {
+        userInfo = UserInfo.fromJson(jsonDecode(response.body));
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request failed')),
+        );
+      }
+    } catch (error) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // nameController = TextEditingController();
-    // emailController = TextEditingController();
-    // passwordController = TextEditingController();
+    fetchUserInfo();
   }
 
   @override
@@ -37,162 +116,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: FutureBuilder<List<User>>(
-            // Fetch the user data using the DatabaseHelper
-            future: widget.databaseHelper.getUsers(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator(); // Loading indicator while fetching data
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else {
-                // If user data is available, display it in the TextFormFields
-                final users = snapshot.data!;
-                final user = users.isNotEmpty
-                    ? users[0]
-                    : null; // Assuming only one user for simplicity
-
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Image.asset(
+                  'assets/icons/brain.png',
+                  height: 100,
+                  width: 100,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'My Note Brain App Profile',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Form(
+                key: _formKey,
+                child: Column(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
+                    TextFormField(
+                      readOnly: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: const Color.fromRGBO(30, 30, 38, 1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        contentPadding: const EdgeInsets.all(20.0),
                       ),
-                      child: Image.asset(
-                        'assets/icons/brain.png',
-                        height: 100,
-                        width: 100,
-                      ),
+                      controller:
+                          TextEditingController(text: userInfo.username),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'My Note Brain App Profile',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      readOnly: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: const Color.fromRGBO(30, 30, 38, 1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        contentPadding: const EdgeInsets.all(20.0),
                       ),
+                      controller: TextEditingController(text: userInfo.email),
                     ),
-                    const SizedBox(height: 10),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Name',
-                              hintStyle: const TextStyle(color: Colors.grey),
-                              filled: true,
-                              fillColor: const Color.fromRGBO(30, 30, 38, 1),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                              contentPadding: const EdgeInsets.all(20.0),
-                            ),
-                            controller:
-                                TextEditingController(text: user?.name ?? ''),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Email',
-                              hintStyle: const TextStyle(color: Colors.grey),
-                              filled: true,
-                              fillColor: const Color.fromRGBO(30, 30, 38, 1),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                              contentPadding: const EdgeInsets.all(20.0),
-                            ),
-                            controller:
-                                TextEditingController(text: user?.email ?? ''),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              } else if (!RegExp(
-                                      r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$')
-                                  .hasMatch(value)) {
-                                return 'Please enter valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          TextFormField(
-                            style: const TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: 'Password',
-                              hintStyle: const TextStyle(color: Colors.grey),
-                              filled: true,
-                              fillColor: const Color.fromRGBO(30, 30, 38, 1),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                              contentPadding: const EdgeInsets.all(20.0),
-                            ),
-                            obscureText: true,
-                            controller: TextEditingController(
-                                text: user?.password ?? ''),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 30),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(20.0)),
-                                    gradient: LinearGradient(colors: [
-                                      Color(0xFF6163B1),
-                                      Color(0xFF6F3D6D),
-                                    ]),
-                                  ),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      shadowColor: Colors.transparent,
-                                      padding: const EdgeInsets.all(20),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20.0),
-                                      ),
-                                    ),
-                                    onPressed: () {},
-                                    child: const Text(
-                                      'UPDATE',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      readOnly: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Plan',
+                        labelStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: const Color.fromRGBO(30, 30, 38, 1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        ),
+                        contentPadding: const EdgeInsets.all(20.0),
                       ),
+                      controller: TextEditingController(text: userInfo.plan),
                     ),
                   ],
-                );
-              }
-            },
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class UserInfo {
+  final String email;
+  final String username;
+  final String id;
+  final String plan;
+
+  UserInfo({
+    required this.email,
+    required this.username,
+    required this.id,
+    required this.plan,
+  });
+
+  factory UserInfo.fromJson(Map<String, dynamic> json) {
+    return UserInfo(
+      email: json['email'] as String,
+      username: json['username'] as String,
+      id: json['id'] as String,
+      plan: json['plan'] as String,
     );
   }
 }

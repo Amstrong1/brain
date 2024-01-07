@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'helpers/database.dart';
 import 'screens/login.dart';
 import 'screens/home.dart';
 
@@ -10,9 +9,6 @@ import 'screens/home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final databaseHelper = DatabaseHelper();
-  await databaseHelper.initializeDatabase();
 
   Future<String?> getTokenFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -36,26 +32,18 @@ void main() async {
 
   Duration difference = date2.difference(date1);
 
-  print(difference.inMinutes);
-  // bool isFirstLaunch = await databaseHelper.checkFirstLaunch();
-
   runApp(MyApp(
-    // isFirstLaunch: isFirstLaunch,
-    databaseHelper: databaseHelper, authToken: authToken,
+    authToken: authToken,
     difference: difference,
   ));
 }
 
 class MyApp extends StatelessWidget {
-  // final bool isFirstLaunch;
-  final DatabaseHelper databaseHelper;
   final Duration difference;
   final String? authToken;
 
   const MyApp({
     Key? key,
-    // required this.isFirstLaunch,
-    required this.databaseHelper,
     required this.authToken,
     required this.difference,
   }) : super(key: key);
@@ -67,12 +55,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(fontFamily: 'Poppins'),
       debugShowCheckedModeBanner: false,
-      home: difference.inMinutes > 30
-          ? HomePage(
-              databaseHelper: databaseHelper,
-              token: authToken!,
-            )
-          : LoginScreen(databaseHelper: databaseHelper),
+      home: difference.inMinutes < 30 && difference.inMinutes > 0
+          ? HomePage(token: authToken!)
+          : const LoginScreen(),
       // home: LoginScreen(databaseHelper: databaseHelper),
     );
   }

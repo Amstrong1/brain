@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<String> refreshToken() async {
-    const String apiUrl = 'http://127.0.0.1:8000/0.1.0/api/auth/refreshToken';
+    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
 
     String? refreshToken = await _getRefreshTokenFromSharedPreferences();
 
@@ -63,6 +63,7 @@ class _ChatScreenState extends State<ChatScreen> {
         },
       );
       final token = jsonDecode(response.body)['access_token'];
+      _saveTokenToSharedPreferences(token);
       return token;
     } catch (e) {
       throw Exception(e.toString());
@@ -86,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     Duration difference = date2.difference(date1);
 
-    if (difference.inMinutes > 30) {
+    if (difference.inMinutes > 30 || difference.inMinutes == 0) {
       authToken = await refreshToken();
     }
 
@@ -225,19 +226,19 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                         ),
                                       ),
-                                      Ink(
-                                        decoration: const ShapeDecoration(
-                                          shape: CircleBorder(),
-                                          color: Color(0xFF6F3D6D),
-                                        ),
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.keyboard_voice,
-                                            color: Colors.white,
-                                          ),
-                                          onPressed: () {},
-                                        ),
-                                      )
+                                      // Ink(
+                                      //   decoration: const ShapeDecoration(
+                                      //     shape: CircleBorder(),
+                                      //     color: Color(0xFF6F3D6D),
+                                      //   ),
+                                      //   child: IconButton(
+                                      //     icon: const Icon(
+                                      //       Icons.keyboard_voice,
+                                      //       color: Colors.white,
+                                      //     ),
+                                      //     onPressed: () {},
+                                      //   ),
+                                      // )
                                     ],
                                   ),
                                 ),

@@ -1,9 +1,16 @@
 import 'dart:async';
 
+// import 'package:record/record.dart';
+// import 'package:audioplayers/audioplayers.dart';
+// import 'package:path_provider/path_provider.dart';
+
 import 'package:flutter/material.dart';
 
+// ignore: must_be_immutable
 class AudioRecorder extends StatefulWidget {
-  const AudioRecorder({super.key});
+  int itemId;
+
+  AudioRecorder({super.key, required this.itemId});
   @override
   // ignore: library_private_types_in_public_api
   _AudioRecorderState createState() => _AudioRecorderState();
@@ -27,7 +34,10 @@ class _AudioRecorderState extends State<AudioRecorder> {
       children: [
         Text(
           formatStopwatchTime(),
-          style: const TextStyle(fontSize: 20, color: Colors.blue),
+          style: const TextStyle(
+            fontSize: 20,
+            color: Colors.blue,
+          ),
         ),
         Row(
           children: [
@@ -75,6 +85,25 @@ class _AudioRecorderState extends State<AudioRecorder> {
       ],
     );
   }
+
+  // void startRecording() async {
+  //   if (await Record.hasPermission()) {
+  //     String path = '${(await getTemporaryDirectory()).path}/test.wav';
+  //     await Record.start(path: path, encoder: AudioEncoder.AAC);
+  //   } else {
+  //     // Request permission to record audio
+  //     Record.requestPermission();
+  //   }
+  // }
+
+  // void stopRecording() async {
+  //   await Record.stop();
+  // }
+
+  // void playRecordedAudio(String path) {
+  //   AudioPlayer audioPlayer = AudioPlayer();
+  //   audioPlayer.play(path, isLocal: true);
+  // }
 
   void toggleRecording() {
     setState(() {

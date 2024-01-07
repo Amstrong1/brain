@@ -1,13 +1,10 @@
 import 'package:brain/screens/result.dart';
 import 'package:flutter/material.dart';
 
-import '../helpers/database.dart';
 import '../screens/profile.dart';
 
 class MyAppBar extends StatelessWidget {
-  const MyAppBar({Key? key, required this.databaseHelper}) : super(key: key);
-
-  final DatabaseHelper databaseHelper;
+  const MyAppBar({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +83,7 @@ class MyAppBar extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) {
-                    return ProfileScreen(databaseHelper: databaseHelper);
+                    return const ProfileScreen();
                   },
                 ),
               );
