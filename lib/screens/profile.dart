@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:brain/helpers/global.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -26,52 +26,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // late TextEditingController emailController;
   // late TextEditingController passwordController;
 
-  Future<String?> _getTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<String?> _getRefreshTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refreshToken');
-  }
-
-  Future<void> _saveTokenToSharedPreferences(String token) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('token', token);
-  }
-
-  Future<String> refreshToken() async {
-    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
-
-    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
-
-    try {
-      final http.Response response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $refreshToken',
-        },
-      );
-      final token = jsonDecode(response.body)['access_token'];
-      _saveTokenToSharedPreferences(token);
-      return token;
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
-  Future<String?> _getDateTimeFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('timestamp');
-  }
-
   void fetchUserInfo() async {
     const String url = 'http://35.180.72.15/api/user/getInfo';
 
-    String? authToken = await _getTokenFromSharedPreferences();
-    String? tokenTime = await _getDateTimeFromSharedPreferences();
+    String? authToken = await MyGlobal.getTokenFromSharedPreferences();
+    String? tokenTime = await MyGlobal.getDateTimeFromSharedPreferences();
 
     DateTime date1 = DateTime.parse(tokenTime!);
     DateTime date2 = DateTime.now();
@@ -79,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Duration difference = date2.difference(date1);
 
     if (difference.inMinutes > 30 || difference.inMinutes == 0) {
-      authToken = await refreshToken();
+      authToken = await MyGlobal.refreshToken();
     }
 
     final Map<String, String> headers = {'Authorization': 'Bearer $authToken'};

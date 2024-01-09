@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:outline_gradient_button/outline_gradient_button.dart';
+
+import '../helpers/global.dart';
 
 class MyChatApp extends StatelessWidget {
   const MyChatApp({super.key});
@@ -34,53 +35,12 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<String?> _getTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<String?> _getRefreshTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refreshToken');
-  }
-
-  Future<void> _saveTokenToSharedPreferences(String token) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('token', token);
-  }
-
-  Future<String> refreshToken() async {
-    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
-
-    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
-
-    try {
-      final http.Response response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $refreshToken',
-        },
-      );
-      final token = jsonDecode(response.body)['access_token'];
-      _saveTokenToSharedPreferences(token);
-      return token;
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
-  Future<String?> _getDateTimeFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('timestamp');
-  }
-
   void sendApiRequest() async {
     const apiUrl = 'http://35.180.72.15/api/items/ask';
     String question = _textController.text;
 
-    String? authToken = await _getTokenFromSharedPreferences();
-    String? tokenTime = await _getDateTimeFromSharedPreferences();
+    String? authToken = await MyGlobal.getTokenFromSharedPreferences();
+    String? tokenTime = await MyGlobal.getDateTimeFromSharedPreferences();
 
     DateTime date1 = DateTime.parse(tokenTime!);
     DateTime date2 = DateTime.now();
@@ -88,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
     Duration difference = date2.difference(date1);
 
     if (difference.inMinutes > 30 || difference.inMinutes == 0) {
-      authToken = await refreshToken();
+      authToken = await MyGlobal.refreshToken();
     }
 
     final Map<String, dynamic> requestData = {
@@ -107,7 +67,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final decodedBytes = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> responseData = jsonDecode(decodedBytes);
         final String answer = responseData['response'];
         // Add the received message to the chat
         addMessage('Brain', answer);

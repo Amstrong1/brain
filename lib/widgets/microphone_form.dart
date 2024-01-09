@@ -4,6 +4,7 @@ import 'dart:async';
 // import 'package:audioplayers/audioplayers.dart';
 // import 'package:path_provider/path_provider.dart';
 
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter/material.dart';
 
 // ignore: must_be_immutable
@@ -20,6 +21,9 @@ class _AudioRecorderState extends State<AudioRecorder> {
   late Stopwatch _stopwatch;
   late Timer _timer;
   bool _isRecording = false;
+
+  final recorder = FlutterSoundRecorder();
+  final player = FlutterSoundPlayer();
 
   @override
   void initState() {
@@ -60,7 +64,9 @@ class _AudioRecorderState extends State<AudioRecorder> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
+                // final recorderData = await recorder.start();
+                // await player.play(recorderData);
                 toggleRecording();
               },
               child: Container(

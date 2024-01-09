@@ -1,10 +1,8 @@
-import 'dart:convert';
-
+import 'package:brain/helpers/global.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:brain/screens/home.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
 class TextForm extends StatefulWidget {
@@ -28,51 +26,10 @@ class _TextFormState extends State<TextForm> {
     contentController = TextEditingController();
   }
 
-  Future<String?> _getTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<String?> _getDateTimeFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('timestamp');
-  }
-
-  Future<String?> _getRefreshTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refreshToken');
-  }
-
-  Future<void> _saveTokenToSharedPreferences(String token) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('token', token);
-  }
-
-  Future<String> refreshToken() async {
-    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
-
-    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
-
-    try {
-      final http.Response response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $refreshToken',
-        },
-      );
-      final token = jsonDecode(response.body)['access_token'];
-      _saveTokenToSharedPreferences(token);
-      return token;
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
   Future<void> createNewNote() async {
     String apiUrl = 'http://35.180.72.15/api/items/newNote';
-    String? authToken = await _getTokenFromSharedPreferences();
-    String? tokenTime = await _getDateTimeFromSharedPreferences();
+    String? authToken = await MyGlobal.getTokenFromSharedPreferences();
+    String? tokenTime = await MyGlobal.getDateTimeFromSharedPreferences();
 
     DateTime date1 = DateTime.parse(tokenTime!);
     DateTime date2 = DateTime.now();
@@ -80,7 +37,7 @@ class _TextFormState extends State<TextForm> {
     Duration difference = date2.difference(date1);
 
     if (difference.inMinutes > 30 || difference.inMinutes == 0) {
-      authToken = await refreshToken();
+      authToken = await MyGlobal.refreshToken();
     }
     if (_formKey.currentState!.validate()) {
       try {
@@ -122,7 +79,7 @@ class _TextFormState extends State<TextForm> {
   }
 
   void _reloadApp() async {
-    String? token = await _getTokenFromSharedPreferences();
+    String? token = await MyGlobal.getTokenFromSharedPreferences();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context).pushAndRemoveUntil(

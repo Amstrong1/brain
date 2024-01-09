@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:brain/helpers/global.dart';
 import 'package:brain/screens/home.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 class FolderForm extends StatefulWidget {
   const FolderForm({super.key, required int itemId});
@@ -22,53 +22,12 @@ class _LoginScreenState extends State<FolderForm> {
     itemController = TextEditingController();
   }
 
-  Future<String?> _getTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<String?> _getDateTimeFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('timestamp');
-  }
-
-  Future<String?> _getRefreshTokenFromSharedPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refreshToken');
-  }
-
-  Future<void> _saveTokenToSharedPreferences(String token) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('token', token);
-  }
-
-  Future<String> refreshToken() async {
-    const String apiUrl = 'http://35.180.72.15/api/auth/refreshToken';
-
-    String? refreshToken = await _getRefreshTokenFromSharedPreferences();
-
-    try {
-      final http.Response response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $refreshToken',
-        },
-      );
-      final token = jsonDecode(response.body)['access_token'];
-      _saveTokenToSharedPreferences(token);
-      return token;
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
   void newItem() async {
     if (_formKey.currentState!.validate()) {
       String apiUrl = 'http://35.180.72.15/api/items/newItem';
-      String? token = await _getTokenFromSharedPreferences();
+      String? token = await MyGlobal.getTokenFromSharedPreferences();
 
-      String? tokenTime = await _getDateTimeFromSharedPreferences();
+      String? tokenTime = await MyGlobal.getDateTimeFromSharedPreferences();
 
       DateTime date1 = DateTime.parse(tokenTime!);
       DateTime date2 = DateTime.now();
@@ -76,7 +35,7 @@ class _LoginScreenState extends State<FolderForm> {
       Duration difference = date2.difference(date1);
 
       if (difference.inMinutes > 30 || difference.inMinutes == 0) {
-        token = await refreshToken();
+        token = await MyGlobal.refreshToken();
       }
 
       final Map<String, dynamic> requestData = {
@@ -124,7 +83,7 @@ class _LoginScreenState extends State<FolderForm> {
   }
 
   void _reloadApp() async {
-    String? token = await _getTokenFromSharedPreferences();
+    String? token = await MyGlobal.getTokenFromSharedPreferences();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context).pushAndRemoveUntil(
